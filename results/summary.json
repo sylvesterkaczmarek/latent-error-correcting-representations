@@ -1,0 +1,22 @@
+{
+  "seeds": [7, 17, 29, 41, 53],
+  "encoder": {"message_bit_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}, "task_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}},
+  "random_corruption": {
+    "uncoded": {"0": {"task_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}}, "1": {"task_accuracy": {"mean": 0.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}}, "2": {"task_accuracy": {"mean": 0.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}}},
+    "repetition3": {"0": {"task_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}}, "1": {"task_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 1.0, "std": 0.0, "n": 5}}, "2": {"task_accuracy": {"mean": 0.8139999985694886, "std": 0.014235739293975886, "n": 5}, "detection_rate": {"mean": 1.0, "std": 0.0, "n": 5}}},
+    "hamming74_detect": {"0": {"task_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}}, "1": {"task_accuracy": {"mean": 0.43349999785423277, "std": 0.012002602369538365, "n": 5}, "detection_rate": {"mean": 1.0, "std": 0.0, "n": 5}}, "2": {"task_accuracy": {"mean": 0.15449999868869782, "std": 0.014753179209569374, "n": 5}, "detection_rate": {"mean": 1.0, "std": 0.0, "n": 5}}},
+    "hamming74_repair": {"0": {"task_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}}, "1": {"task_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 1.0, "std": 0.0, "n": 5}}, "2": {"task_accuracy": {"mean": 0.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 1.0, "std": 0.0, "n": 5}}}
+  },
+  "adversarial_single_flip": {
+    "uncoded": {"task_accuracy": {"mean": 0.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}},
+    "repetition3": {"task_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 1.0, "std": 0.0, "n": 5}},
+    "hamming74_detect": {"task_accuracy": {"mean": 0.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 1.0, "std": 0.0, "n": 5}},
+    "hamming74_repair": {"task_accuracy": {"mean": 1.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 1.0, "std": 0.0, "n": 5}}
+  },
+  "coherent_drift": {
+    "uncoded": {"task_accuracy": {"mean": 0.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}},
+    "repetition3": {"task_accuracy": {"mean": 0.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}},
+    "hamming74_detect": {"task_accuracy": {"mean": 0.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}},
+    "hamming74_repair": {"task_accuracy": {"mean": 0.0, "std": 0.0, "n": 5}, "detection_rate": {"mean": 0.0, "std": 0.0, "n": 5}}
+  }
+}
