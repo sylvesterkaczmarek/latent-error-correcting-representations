@@ -335,11 +335,9 @@ pip install -r requirements-dev.txt
 
 ## Cite this repository
 
-If you use or adapt this repository, please cite
+If you use or adapt this repository, please cite:
 
 > Kaczmarek, S. (2026). *Latent Error-Correcting Representations*. GitHub. https://github.com/sylvesterkaczmarek/latent-error-correcting-representations
-
-**BibTeX**
 
 ```bibtex
 @software{Kaczmarek_2026_Latent_Error_Correcting_Representations,
