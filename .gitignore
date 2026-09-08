@@ -10,3 +10,5 @@ venv/
 .vscode/
 *.log
 results/local/
+build/
+dist/

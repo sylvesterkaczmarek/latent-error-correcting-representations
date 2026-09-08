@@ -1,3 +1,5 @@
+# Reference manifest for the checked benchmark, not a runtime configuration file.
+# The commands accept --seeds, --epochs and --out; other settings are fixed in code.
 seeds: [7, 17, 29, 41, 53]
 encoder:
   input_dim: 16

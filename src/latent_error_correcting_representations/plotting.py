@@ -27,7 +27,7 @@ def plot_random_corruption(summary: dict, out_dir: str | Path) -> None:
         vals = [summary["random_corruption"][method][str(k)]["task_accuracy"]["mean"] for k in ks]
         ax.plot(ks, vals, marker="o", label=label)
     ax.set_xlabel("Exact latent bit flips per sample")
-    ax.set_ylabel("Task accuracy")
+    ax.set_ylabel("Pre-corruption task identity preserved")
     ax.set_xticks(ks)
     ax.set_ylim(-0.02, 1.02)
     ax.legend()
@@ -55,7 +55,7 @@ def plot_adversarial(summary: dict, out_dir: str | Path) -> None:
     x = np.arange(len(methods))
     ax.bar(x, vals)
     ax.set_xticks(x, [METHOD_LABELS[m] for m in methods], rotation=15, ha="right")
-    ax.set_ylabel("Adversarial single-flip failure rate")
+    ax.set_ylabel("Pre-corruption identity changed by attack")
     ax.set_ylim(-0.02, 1.02)
     ax.grid(axis="y", alpha=0.25)
     _save(fig, out / "adversarial_single_flip.png")
@@ -69,7 +69,7 @@ def plot_coherent_drift(summary: dict, out_dir: str | Path) -> None:
     x = np.arange(len(methods))
     width = 0.36
     fig, ax = plt.subplots(figsize=(8.6, 4.9))
-    ax.bar(x - width / 2, task_failure, width, label="Behavioral failure")
+    ax.bar(x - width / 2, task_failure, width, label="Pre-corruption identity changed")
     ax.bar(x + width / 2, detection, width, label="Syndrome/detection signal")
     ax.set_xticks(x, [METHOD_LABELS[m] for m in methods], rotation=15, ha="right")
     ax.set_ylim(-0.02, 1.02)
