@@ -5,12 +5,16 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  OMP_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,9 +24,44 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          python -m pip install "torch>=2.6,<3" --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e ".[dev]"
       - name: Tests
         run: pytest -q
       - name: Smoke experiment
         if: matrix.python-version == '3.11'
         run: python -m experiments.run_all --seeds 7 --epochs 4 --out /tmp/latent-ecc-smoke
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Build and check distributions
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Install wheel
+        run: |
+          python -m pip install "torch>=2.6,<3" --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install dist/*.whl
+      - name: Run installed commands outside the checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          python -I -m experiments.corruption_sweep --help
+          python -I -m experiments.adversarial_flip --help
+          python -I -m experiments.coherent_drift --help
+          python -I -m experiments.run_all --seeds 7 --epochs 1 --out wheel-smoke
+          python -I - <<'PY'
+          import json
+          from pathlib import Path
+          output = Path("wheel-smoke")
+          summary = json.loads((output / "summary.json").read_text())
+          assert summary["seeds"] == [7]
+          assert (output / "runs" / "seed_7.json").is_file()
+          assert len(list((output / "figures").glob("*.png"))) == 4
+          PY

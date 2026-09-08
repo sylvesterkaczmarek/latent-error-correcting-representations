@@ -5,6 +5,8 @@ This repository is a controlled mechanistic benchmark. It should not be read as 
 - The encoder is a small MLP with a four-bit supervised semantic bottleneck.
 - Hamming(7,4) and repetition codes are deliberately simple classical codes.
 - The corruption model acts on discrete latent bits after message formation.
+- Legacy corruption accuracy measures preservation of the encoder's prediction. New end-to-end fields measure the true task separately; code validity cannot correct an encoder error by itself.
+- `correction_rate` counts repair attempts, including miscorrections, and is not a success rate.
 - The benchmark does not model distributed continuous representations in large transformers.
 - The parity-check syndrome detects code invalidity, not semantic invalidity.
 - The code-consistent drift challenge is constructed adversarially rather than learned strategically by a model.

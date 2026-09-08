@@ -1,24 +1,22 @@
 from __future__ import annotations
 
-import argparse
 import json
 from pathlib import Path
+from collections.abc import Sequence
 
 from latent_error_correcting_representations.experiment import run_seed, summarize
 from latent_error_correcting_representations.plotting import plot_coherent_drift
+from ._cli import challenge_report, parse_args
 
 
-def main() -> None:
-    p = argparse.ArgumentParser()
-    p.add_argument("--seeds", nargs="+", type=int, default=[7, 17, 29, 41, 53])
-    p.add_argument("--epochs", type=int, default=5)
-    p.add_argument("--out", default="results/coherent_drift")
-    args = p.parse_args()
+def main(argv: Sequence[str] | None = None) -> None:
+    args = parse_args(argv, default_out="results/coherent_drift")
     out = Path(args.out)
     results = [run_seed(s, out / "runs", epochs=args.epochs) for s in args.seeds]
     summary = summarize(results)
     (out / "summary.json").parent.mkdir(parents=True, exist_ok=True)
-    (out / "summary.json").write_text(json.dumps(summary["coherent_drift"], indent=2), encoding="utf-8")
+    report = challenge_report(summary, "coherent_drift")
+    (out / "summary.json").write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
     plot_coherent_drift(summary, out / "figures")
 
 

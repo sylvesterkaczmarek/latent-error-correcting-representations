@@ -25,7 +25,9 @@ Homepage = "https://www.sylvesterkaczmarek.com"
 Repository = "https://github.com/sylvesterkaczmarek/latent-error-correcting-representations"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["src", "."]
+include = ["latent_error_correcting_representations*", "experiments*"]
+namespaces = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
