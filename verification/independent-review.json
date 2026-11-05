@@ -40,5 +40,12 @@
     "byte_identical": true,
     "differences": []
   },
-  "publication": "GitHub-only workflow; no PyPI authorization assumed"
+  "publication": "GitHub-only workflow; no PyPI authorization assumed",
+  "runner_allocation": {
+    "initial_run": 42058138902,
+    "initial_head": "652e5da4f009a957a22dd819988ecde8d789d3b7",
+    "reason": "macos-latest job remained queued without a runner while all Linux and dependency jobs passed",
+    "change": "Pin supported macos-15 ARM64 image; all test gates unchanged",
+    "additional_local_mac_python314_tests": 366
+  }
 }

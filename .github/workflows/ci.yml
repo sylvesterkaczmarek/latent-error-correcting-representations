@@ -43,7 +43,7 @@ jobs:
         run: python -m experiments.selective_decoding run --seeds 73 --epochs 1 --out "${{ runner.temp }}/selective-new-seed"
       - run: git diff --exit-code
   macos:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:

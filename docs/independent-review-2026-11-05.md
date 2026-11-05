@@ -131,3 +131,12 @@ References checked for the release:
 - PyTorch restricted serialization: https://docs.pytorch.org/docs/stable/notes/serialization
 - PyTorch reproducibility: https://docs.pytorch.org/docs/stable/notes/randomness.html
 - AMD SECDED scope: https://docs.amd.com/r/en-US/am011-versal-acap-trm/Memory-Error-Detection-and-Correction
+
+## Hosted runner allocation
+
+The first final-review CI attempt completed its Linux Python matrix and dependency
+audit, but the macos-latest job remained unassigned. That attempt was cancelled
+before merge. The macOS job was pinned to the supported macos-15 ARM64 image
+without removing or weakening any test. The final exact-head CI and release
+workflow retain the full macOS suite and installed-package gates. Independent
+local macOS installations on Python 3.13 and 3.14 also passed all 366 tests.
