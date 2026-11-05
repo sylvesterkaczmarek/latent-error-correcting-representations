@@ -1,0 +1,44 @@
+{
+  "status": "LOCAL_INDEPENDENT_REVIEW_PASSED",
+  "original_candidate": "077e016372a338d55487dae85f2c97eb43cc0704",
+  "base": "5c59cca89cd8ab5891d71502b988c4ac01e042a1",
+  "original_candidate_tests": 307,
+  "original_external_checks": 39,
+  "original_external_failures": 34,
+  "expanded_checks": 59,
+  "expanded_failures_before_repair": 47,
+  "expanded_checks_after_repair": 59,
+  "final_source_tests": 366,
+  "original_implementation_audit_failures_reproduced": 22,
+  "coding_oracle": {
+    "status": "PASS",
+    "message_mask_cases": 76032,
+    "all_received_words": 4752,
+    "adversarial_valid_message_cases": 192,
+    "reference": "Integer parity-constraint codebook, nearest-codeword and majority decoding; no implementation encoder/decoder used to construct expected outcomes."
+  },
+  "training_replay": {
+    "status": "PASS",
+    "trained_seeds_reproduced": 5,
+    "policy_challenge_cells_reproduced": 240,
+    "unchanged_predictions_decisions_counts_statistics": true,
+    "checkpoints_tensor_identical": true,
+    "checkpoint_versions_checked": 10,
+    "saved_checkpoint_predictions_checked": 8000,
+    "verification": "Regenerated train/test tensors and independently evaluated saved linear/tanh layers. No call to MessageEncoder.forward for inference reference.",
+    "current_source_hashes_match_replay": true,
+    "independent_sample_count": 5,
+    "replays_add_independent_samples": false,
+    "expected_metadata_changes": [
+      "source hashes",
+      "plan hashes",
+      "checkpoint file hashes binding the changed plan"
+    ]
+  },
+  "initial_independent_replay": {
+    "files": 19,
+    "byte_identical": true,
+    "differences": []
+  },
+  "publication": "GitHub-only workflow; no PyPI authorization assumed"
+}

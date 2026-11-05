@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "latent-error-correcting-representations"
-version = "0.2.0rc1"
+version = "0.2.0"
 description = "Controlled experiments on error-correcting redundancy for latent self-monitoring and repair."
 readme = "README.md"
 requires-python = ">=3.10"

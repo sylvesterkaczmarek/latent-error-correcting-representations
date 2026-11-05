@@ -125,6 +125,7 @@ for module,source in [(package,project/'src/latent_error_correcting_representati
         run(["-c", check_script, name, version, str(project)])
         # importlib mode and a separate cwd prevent checkout experiments from masking the wheel.
         run(["-m", "pytest", "--import-mode=importlib", "-q", str(project / "tests")])
+        run([str(project / "scripts/independent_coding_oracle.py")])
         run(["-m", "experiments.showcase", "--out", str(root / "showcase")])
         run(
             [

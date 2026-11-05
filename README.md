@@ -7,9 +7,9 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-## November research candidate
+## Research integrity release
 
-Version **0.2.0rc1** is an unpublished candidate for independent review. It strengthens
+Version **0.2.0** adds independently checked study contracts and checkpoint validation. It strengthens
 experiment and output integrity and adds a separate [SECDED and abstention
 study](docs/selective-decoding.md). The original four-method reference remains below.
 
@@ -31,6 +31,14 @@ See the [audit and migration notes](docs/audit-2026-11-05.md). Full evidence is 
 Controlled PyTorch experiments testing whether error-correcting redundancy inside a neural representation can provide an endogenous signal for detecting and repairing internal corruption, and where that signal fails.
 
 A small neural encoder learns a four-bit semantic bottleneck. The benchmark then compares uncoded latents, repetition coding, Hamming(7,4) detection, and Hamming(7,4) repair under random and adversarial bit corruption. The final challenge moves the internal state directly to another valid codeword, testing whether structural consistency can detect coherent semantic drift.
+
+The [independent review](docs/independent-review-2026-11-05.md) documents the
+separate-pass findings, repairs, exhaustive integer-reference checks and fresh
+five-seed training reproduction. The complete suite contains 366 tests, including
+59 separately authored review cases. The original checked study remains unchanged.
+Installable distributions and source evidence are provided through
+[GitHub releases](https://github.com/sylvesterkaczmarek/latent-error-correcting-representations/releases).
+This release does not publish a PyPI package.
 
 ## At a glance
 

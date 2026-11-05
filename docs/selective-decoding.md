@@ -117,7 +117,10 @@ python -m experiments.showcase --out /tmp/latent-ecc-demo-new
 
 Use absent output destinations. Verification recomputes corruptions and decisions
 from the recorded traces, aggregates the seed results, checks file hashes, and
-repeats finite enumeration. It does not retrain the model. Hashes are integrity
+repeats finite enumeration. Version 0.2.0 also validates the complete declared
+design, unique cells, integer counts and rates, canonical recorded bit types,
+and restricted checkpoint contents against the traced model state. It does not
+retrain or replay model inference during routine verification. Hashes are integrity
 checks, not authentication. A complete replay with the same environment reproduced
 all five seeds, all 240 cells, traces, checkpoints and statistics exactly. Cross-
 version or cross-hardware bitwise training reproducibility is not promised.
@@ -127,3 +130,14 @@ version or cross-hardware bitwise training reproducibility is not promised.
 - SECDED implementation documentation: https://kevinpt.github.io/vhdl-extras/rst/modules/secded_edac.html
 - AMD memory ECC documentation: https://docs.amd.com/r/en-US/ug573-ultrascale-memory-resources/Built-in-Error-Detection-and-Correction
 - PyTorch reproducibility guidance: https://docs.pytorch.org/docs/stable/notes/randomness.html
+
+## Independent release reproduction
+
+A separate fresh checkout reproduced the original five-seed execution byte for
+byte across all 19 files. After the verifier repairs, another five-seed run
+retained every prediction, decision, count, loss, data fingerprint and model
+tensor. Source/plan hashes and checkpoint file hashes changed because the saved
+checkpoint binds its plan. These expected provenance changes do not alter the
+results. Saved-state inference was additionally evaluated through direct linear
+and tanh operations for both sets of five checkpoints, confirming 8,000
+predictions against the traces. This remains five independent training seeds.

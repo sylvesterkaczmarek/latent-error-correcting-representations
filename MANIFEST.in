@@ -7,3 +7,4 @@ recursive-include results/selective-v1 *.json *.pt
 include results/summary.json
 recursive-include assets *.png
 recursive-include .github/workflows *.yml
+recursive-include verification *.json *.txt
