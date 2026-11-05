@@ -45,7 +45,11 @@ def train_encoder(
     _positive_integer(epochs, "epochs")
     _positive_integer(batch_size, "batch_size")
     seed = validate_seed(seed)
-    if isinstance(lr, bool) or not isinstance(lr, Real) or not math.isfinite(lr) or lr <= 0:
+    try:
+        valid_lr = not isinstance(lr, bool) and isinstance(lr, Real) and math.isfinite(lr) and lr > 0
+    except (OverflowError, TypeError):
+        valid_lr = False
+    if not valid_lr:
         raise ValueError("lr must be finite and positive")
     if len(dataset) == 0:
         raise ValueError("training dataset must not be empty")

@@ -20,6 +20,8 @@ def _binary_batch(
     """Validate before integer conversion so invalid bit values cannot be truncated."""
     if not isinstance(value, torch.Tensor):
         raise TypeError(f"{name} must be a torch.Tensor")
+    if value.layout != torch.strided:
+        raise ValueError(f"{name} must use a dense strided tensor")
     if value.ndim != 2 or (width is not None and value.shape[1] != width):
         expected = f"(N, {width})" if width is not None else "(N, width)"
         raise ValueError(f"{name} must have shape {expected}")
@@ -42,6 +44,8 @@ def encode_uncoded(message: torch.Tensor) -> torch.Tensor:
 
 
 def decode_uncoded(codeword: torch.Tensor, repair: bool = False) -> DecodeResult:
+    if type(repair) is not bool:
+        raise ValueError("repair must be an explicit boolean")
     c = _binary_batch(codeword, 4, name="codeword")
     n = c.shape[0]
     false = torch.zeros(n, dtype=torch.bool, device=codeword.device)
@@ -54,6 +58,8 @@ def encode_repetition3(message: torch.Tensor) -> torch.Tensor:
 
 
 def decode_repetition3(codeword: torch.Tensor, repair: bool = True) -> DecodeResult:
+    if type(repair) is not bool:
+        raise ValueError("repair must be an explicit boolean")
     c = _binary_batch(codeword, 12, name="codeword")
     groups = c.reshape(c.shape[0], 4, 3)
     sums = groups.sum(dim=-1)
@@ -84,6 +90,8 @@ def hamming74_syndrome(codeword: torch.Tensor) -> torch.Tensor:
 
 
 def decode_hamming74(codeword: torch.Tensor, repair: bool = True) -> DecodeResult:
+    if type(repair) is not bool:
+        raise ValueError("repair must be an explicit boolean")
     syndrome = hamming74_syndrome(codeword)
     c = codeword.to(torch.int64).clone()
     detected = syndrome != 0

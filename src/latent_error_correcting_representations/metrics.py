@@ -26,6 +26,10 @@ def evaluate(decoded_message: torch.Tensor, true_message: torch.Tensor, detected
             raise ValueError(f"{name} must contain one binary flag per message")
         if flags.is_complex() or not bool(((flags == 0) | (flags == 1)).all()):
             raise ValueError(f"{name} flags must be binary and finite")
+    if detected.device != decoded_message.device or corrected.device != decoded_message.device:
+        raise ValueError("metric flags must use the message device")
+    if (corrected.bool() & ~detected.bool()).any():
+        raise ValueError("correction requires a detected corruption")
     bit_acc = (decoded_message == true_message).float().mean().item()
     task_acc = (task_label(decoded_message) == task_label(true_message)).float().mean().item()
     return EvalMetrics(
