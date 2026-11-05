@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 import hashlib
+from copy import deepcopy
 import math
 from pathlib import Path
 import platform
 import statistics
+import stat
 import numpy as np
 import torch
 from .artifacts import canonical, digest, read_json, write_new_json, experiment_output
@@ -24,6 +26,13 @@ from .selective import (
     adversarial_exact_flip,
 )
 from .exhaustive import enumerate_codes
+from .evidence_contracts import (
+    validate_plan,
+    validate_identity,
+    validate_bits,
+    validate_result,
+    WIDTHS,
+)
 
 CHALLENGES = (
     "random_0",
@@ -73,8 +82,8 @@ def design(seeds, epochs):
         "source_sha256": source_identity(),
         "environment": {
             "python": platform.python_version(),
-            "torch": torch.__version__,
-            "numpy": np.__version__,
+            "torch": str(torch.__version__),
+            "numpy": str(np.__version__),
             "threads": torch.get_num_threads(),
             "deterministic_algorithms": True,
         },
@@ -104,6 +113,9 @@ def damage(method, codeword, predicted, seed, challenge):
 
 
 def run_trial(plan, seed, out):
+    validate_plan(plan)
+    if type(seed) is not int or seed not in plan["seeds"]:
+        raise ValueError("trial seed is outside the plan")
     seed_everything(seed)
     data = make_dataset(seed, **plan["data"])
     model = MessageEncoder(**plan["model"])
@@ -167,6 +179,12 @@ def run_trial(plan, seed, out):
 
 
 def summarize_trace(trace, plan, *, verify_corruption=True):
+    validate_plan(plan)
+    validate_identity(trace, plan)
+    if type(verify_corruption) is not bool:
+        raise ValueError("verify_corruption must be a boolean")
+    validate_bits(trace.get("predicted_messages"), plan["data"]["n_test"], 4)
+    validate_bits(trace.get("true_messages"), plan["data"]["n_test"], 4)
     if (
         type(trace.get("seed")) is not int
         or trace["seed"] not in plan["seeds"]
@@ -192,6 +210,7 @@ def summarize_trace(trace, plan, *, verify_corruption=True):
         ):
             raise ValueError("duplicate or unknown method/challenge cell")
         seen.add(key)
+        validate_bits(row.get("damaged_words"), plan["data"]["n_test"], WIDTHS[key[0]])
         damaged = torch.tensor(row["damaged_words"])
         if verify_corruption:
             expected = damage(
@@ -250,6 +269,11 @@ def summarize_trace(trace, plan, *, verify_corruption=True):
 
 
 def summary(results, plan):
+    validate_plan(plan)
+    if type(results) is not list:
+        raise ValueError("seed results must be a list")
+    for record in results:
+        validate_result(record, plan)
     if any(type(row.get("seed")) is not int for row in results):
         raise ValueError("seed identities must be integers")
     if len(results) != len(plan["seeds"]) or sorted(
@@ -260,6 +284,8 @@ def summary(results, plan):
         )
     if any(row["plan_sha256"] != digest(plan) for row in results):
         raise ValueError("result is from a different plan")
+
+    results = sorted(results, key=lambda r: plan["seeds"].index(r["seed"]))
 
     def mean_sd(values):
         usable = [x for x in values if x is not None]
@@ -333,7 +359,7 @@ def summary(results, plan):
     return {
         "schema_version": 1,
         "plan_sha256": digest(plan),
-        "seeds": plan["seeds"],
+        "seeds": deepcopy(plan["seeds"]),
         "encoder_task_accuracy": mean_sd([r["encoder_task_accuracy"] for r in results]),
         "comparisons": grouped,
         "paired": paired,
@@ -359,18 +385,10 @@ def execute(seeds, epochs, output):
 def verify_study(path):
     path = Path(path)
     plan = read_json(path / "plan.json")
+    validate_plan(plan)
     completion = read_json(path / "completion.json")
     if completion.get("status") != "COMPLETE":
         raise ValueError("experiment was not completed")
-    if any(p.is_symlink() for p in path.rglob("*")):
-        raise ValueError("evidence tree must not contain symlinks")
-    actual = {
-        p.relative_to(path).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
-        for p in path.rglob("*")
-        if p.is_file() and p != path / "completion.json"
-    }
-    if actual != completion["files"]:
-        raise ValueError("experiment files differ from their completion manifest")
     expected_files = {"plan.json", "summary.json", "exhaustive.json"} | {
         f"{folder}/seed_{seed}.{suffix}"
         for seed in plan["seeds"]
@@ -380,8 +398,32 @@ def verify_study(path):
             ("checkpoints", "pt"),
         )
     }
-    if set(actual) != expected_files:
+    paths = {}
+    for entry in path.rglob("*"):
+        info = entry.lstat()
+        if stat.S_ISDIR(info.st_mode):
+            continue
+        if not stat.S_ISREG(info.st_mode):
+            raise ValueError(
+                "evidence tree must contain only regular files and directories"
+            )
+        name = entry.relative_to(path).as_posix()
+        if name == "completion.json":
+            continue
+        if info.st_size > 32 * 1024 * 1024:
+            raise ValueError("evidence file exceeds the verification read limit")
+        paths[name] = entry
+    if set(paths) != expected_files:
         raise ValueError("unexpected or missing evidence files")
+    actual = {}
+    for name, entry in paths.items():
+        with entry.open("rb") as stream:
+            raw = stream.read(32 * 1024 * 1024 + 1)
+        if len(raw) > 32 * 1024 * 1024:
+            raise ValueError("evidence file exceeds the verification read limit")
+        actual[name] = hashlib.sha256(raw).hexdigest()
+    if actual != completion["files"]:
+        raise ValueError("experiment files differ from their completion manifest")
     records = []
     for seed in plan["seeds"]:
         trace = read_json(path / "traces" / f"seed_{seed}.json")
@@ -392,6 +434,7 @@ def verify_study(path):
             raise ValueError("seed summary does not match trace")
         if result["checkpoint_sha256"] != actual[f"checkpoints/seed_{seed}.pt"]:
             raise ValueError("checkpoint digest does not match trace")
+        verify_checkpoint(path / f"checkpoints/seed_{seed}.pt", result, plan)
         records.append(result)
     if not equivalent(summary(records, plan), read_json(path / "summary.json")):
         raise ValueError("aggregate statistics do not match recorded seeds")
@@ -404,8 +447,51 @@ def verify_study(path):
         * len(SELECTIVE_METHODS)
         * len(CHALLENGES),
         "message_mask_pairs": read_json(path / "exhaustive.json")["message_mask_pairs"],
-        "meaning": "Trace decoding, corruption budgets, aggregation and file consistency; not a new neural-training reproduction or authenticated provenance.",
+        "meaning": "Trace decoding, corruption budgets, checkpoint model identity, aggregation and file consistency; not neural retraining, checkpoint inference replay or authenticated provenance.",
     }
+
+
+def verify_checkpoint(path, record, plan):
+    """Restricted CPU loading binds checkpoint structure and state to the trace.
+
+    This accepts only the small local benchmark state, not arbitrary external
+    models. weights_only is a restricted unpickler, not a general sandbox.
+    """
+    if path.stat().st_size > 2 * 1024 * 1024:
+        raise ValueError("checkpoint exceeds the local model size bound")
+    try:
+        saved = torch.load(path, map_location="cpu", weights_only=True)
+        if type(saved) is not dict or saved.keys() != {"model", "seed", "plan_sha256"}:
+            raise ValueError("checkpoint has unsupported fields")
+        if (
+            type(saved["seed"]) is not int
+            or saved["seed"] != record["seed"]
+            or saved["plan_sha256"] != digest(plan)
+        ):
+            raise ValueError("checkpoint identity differs from trace")
+        # Inspect without changing the caller's CPU random stream.
+        with torch.random.fork_rng(devices=[]):
+            template = MessageEncoder(**plan["model"]).state_dict()
+        state = saved["model"]
+        if not isinstance(state, dict) or state.keys() != template.keys():
+            raise ValueError("checkpoint parameter names differ from architecture")
+        for name, value in state.items():
+            target = template[name]
+            if (
+                not isinstance(value, torch.Tensor)
+                or value.layout != torch.strided
+                or value.shape != target.shape
+                or value.dtype != target.dtype
+                or value.device.type != "cpu"
+                or not torch.isfinite(value).all()
+            ):
+                raise ValueError("checkpoint parameter type, shape or values invalid")
+        if tensor_digest(state) != record["model_sha256"]:
+            raise ValueError("checkpoint state differs from the traced model")
+    except Exception as exc:
+        raise ValueError(
+            f"invalid local model checkpoint ({type(exc).__name__})"
+        ) from exc
 
 
 def equivalent(a, b):
