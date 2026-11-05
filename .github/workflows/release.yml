@@ -71,7 +71,7 @@ jobs:
         run: |
           gh release create "$TAG" release-assets/* --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" --title "Latent Error-Correcting Representations $TAG" \
-            --notes-file release-assets/RELEASE_NOTES.md --latest
+            --notes-file release-assets/RELEASE_NOTES.md --latest=false
   public-verification:
     name: Verify public release installation
     needs: publish

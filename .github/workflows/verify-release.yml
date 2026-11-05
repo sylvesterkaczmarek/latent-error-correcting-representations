@@ -1,0 +1,68 @@
+name: Verify public release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing final release tag to verify without modifying it
+        required: true
+        default: v0.2.0
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: verify-public-release-${{ inputs.tag }}
+  cancel-in-progress: false
+jobs:
+  public-verification:
+    name: Verify public tagged package
+    runs-on: ubuntu-latest
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: Download existing release without changing it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          python -c 'import re,sys; assert re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+",sys.argv[1])' "$TAG"
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease,tagName > release-metadata.json
+          python -c 'import json,sys; d=json.load(open("release-metadata.json")); assert not d["isDraft"] and not d["isPrerelease"] and d["tagName"]==sys.argv[1]' "$TAG"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir public-release
+          (cd public-release && sha256sum --check --strict SHA256SUMS.txt)
+          test "$(cat public-release/COMMIT.txt)" = "$(git rev-parse HEAD)"
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json,subprocess,tomllib,zipfile
+          assets=Path('public-release')
+          proof=json.loads((assets/'distribution.json').read_text())
+          project=tomllib.loads(Path('pyproject.toml').read_text())['project']
+          assert proof['status']=='PASS' and proof['distribution']==project['name'] and proof['version']==project['version']
+          for pattern,key in [('*.whl','wheel_sha256'),('*.tar.gz','sdist_sha256')]:
+              files=list(assets.glob(pattern)); assert len(files)==1
+              assert hashlib.sha256(files[0].read_bytes()).hexdigest()==proof[key]
+          names=subprocess.check_output(['git','ls-tree','-r','--name-only','HEAD'],text=True).splitlines()
+          with zipfile.ZipFile(assets/'source.zip') as archive:
+              assert {n for n in archive.namelist() if not n.endswith('/')}==set(names)
+              for name in names:
+                  assert archive.read(name)==subprocess.check_output(['git','show','HEAD:'+name]),name
+          PY
+      - name: Test non-editable public wheel outside checkout
+        run: python scripts/verify_distribution.py public-release/*.whl public-release/*.tar.gz --report public-verification.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: public-release-verification
+          path: |
+            public-verification.json
+            release-metadata.json
+          if-no-files-found: error
+          retention-days: 90
