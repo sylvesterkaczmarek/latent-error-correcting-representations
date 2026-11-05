@@ -12,3 +12,5 @@ venv/
 results/local/
 build/
 dist/
+
+.ruff_cache/

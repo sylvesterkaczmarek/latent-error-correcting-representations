@@ -1,0 +1,9 @@
+include LICENSE README.md CITATION.cff Makefile CHANGELOG.md requirements*.txt
+recursive-include docs *.md
+recursive-include configs *.yaml
+recursive-include tests *.py
+recursive-include scripts *.py *.sh
+recursive-include results/selective-v1 *.json *.pt
+include results/summary.json
+recursive-include assets *.png
+recursive-include .github/workflows *.yml

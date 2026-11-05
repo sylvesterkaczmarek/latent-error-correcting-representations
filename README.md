@@ -7,6 +7,27 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
+## November research candidate
+
+Version **0.2.0rc1** is an unpublished candidate for independent review. It strengthens
+experiment and output integrity and adds a separate [SECDED and abstention
+study](docs/selective-decoding.md). The original four-method reference remains below.
+
+The new study contains five trained encoders, **240 policy/challenge cells**, complete
+per-example traces, model checkpoints, and **76,032 exhaustive message/corruption
+cases**. Classical extended Hamming corrects every single-bit error and abstains
+on every double-bit error. It still miscorrects three-bit errors and accepts a
+wrong valid codeword. Abstention has zero task success, not perfect accuracy.
+
+```bash
+python -m experiments.showcase --out /tmp/latent-ecc-demo-new
+python -m experiments.selective_decoding verify --out results/selective-v1
+```
+
+The demonstration uses synthetic tensors without training or external services.
+See the [audit and migration notes](docs/audit-2026-11-05.md). Full evidence is in
+[results/selective-v1](results/selective-v1), separate from the historical summary.
+
 Controlled PyTorch experiments testing whether error-correcting redundancy inside a neural representation can provide an endogenous signal for detecting and repairing internal corruption, and where that signal fails.
 
 A small neural encoder learns a four-bit semantic bottleneck. The benchmark then compares uncoded latents, repetition coding, Hamming(7,4) detection, and Hamming(7,4) repair under random and adversarial bit corruption. The final challenge moves the internal state directly to another valid codeword, testing whether structural consistency can detect coherent semantic drift.
@@ -177,7 +198,7 @@ pytest -q
 Run the five-seed reference suite:
 
 ```bash
-python -m experiments.run_all --seeds 7 17 29 41 53 --epochs 5 --out results
+python -m experiments.run_all --seeds 7 17 29 41 53 --epochs 5 --out runs/reference
 ```
 
 or:
@@ -211,7 +232,7 @@ python -m experiments.coherent_drift
 The reference suite produces:
 
 ```text
-results/
+runs/reference/
 ├── summary.json
 ├── runs/
 │   ├── seed_7.json
@@ -265,7 +286,7 @@ latent-error-correcting-representations/
 
 ## Reproducibility
 
-The reference suite is CPU-sized and completes in seconds on the development environment used for the checked results.
+The reference suite runs on CPU. Use a new output directory for each run; existing experiment evidence is never overwritten.
 
 Controls include:
 
