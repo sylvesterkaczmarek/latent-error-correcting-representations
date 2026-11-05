@@ -14,3 +14,13 @@ This repository is a controlled mechanistic benchmark. It should not be read as 
 - The benchmark does not model recursive self-improvement, deceptive alignment, changing objectives, or human value uncertainty.
 
 The useful conclusion is narrower: structured redundancy can provide a strong endogenous signal for some internal corruption classes, while coherent movement between valid representations can evade that signal completely.
+
+## Selective decoding extension
+
+SECDED is a classical extension, not an original coding algorithm. Its single-error
+correction/double-error detection contract relies on a bounded error model. The
+new suite deliberately measures triple-error miscorrection and valid-codeword
+substitution. Rejecting a double error is an abstention, not a successful task.
+Different encoded widths have different cost and per-bit exposure. Descriptive
+five-seed bootstrap intervals do not establish general superiority or significance
+across all reported comparisons. See selective-decoding.md for exact denominators.

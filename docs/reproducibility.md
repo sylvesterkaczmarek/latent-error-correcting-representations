@@ -5,10 +5,10 @@ The reference benchmark is designed for CPU execution.
 ## Reference command
 
 ```bash
-python -m experiments.run_all --seeds 7 17 29 41 53 --epochs 5 --out results
+python -m experiments.run_all --seeds 7 17 29 41 53 --epochs 5 --out runs/reference
 ```
 
-The checked reference suite uses five fixed seeds and regenerates the JSON summaries and figures in `results/`.
+The checked reference suite uses five fixed seeds and generates new JSON summaries and figures in `runs/reference/`; the checked historical summary is not overwritten.
 
 Use a separate `--out` directory when comparing a new run with the checked reference
 results. The same `python -m experiments...` commands work from a source checkout
@@ -69,3 +69,17 @@ bit-for-bit reproducibility across different PyTorch versions or platforms; see
 the [PyTorch reproducibility notes](https://docs.pytorch.org/docs/stable/notes/randomness.html).
 
 New seed files and full summaries include schema version 2 metadata with settings, software versions, thread count and metric references. `summarize` accepts legacy run records together, but rejects mixing legacy and new records or combining different configurations or recorded environments. A single-run standard deviation is stored as zero by convention; it does not estimate variability across seeds.
+
+## Selective decoding follow-up
+
+The separate [selective-decoding study](selective-decoding.md) records 240 cells
+across five encoders, 76,032 exact finite cases, weights, traces and a complete
+manifest. Run `python -m experiments.selective_decoding verify --out results/selective-v1`
+to recompute evidence consistency, or `run --out /tmp/latent-study-new` to train
+again. Repeated seeds are not additional independent observations.
+
+The [audit record](audit-2026-11-05.md) describes stricter input and output contracts.
+New output directories contain plan.json and completion.json, or retained failure
+evidence. Existing paths are rejected before training. CI now includes Linux
+Python 3.10-3.14 and macOS, a known-advisory audit of reference pins, and complete
+outside-checkout installed tests. Actual run outcomes remain the source of truth.

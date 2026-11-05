@@ -1,0 +1,74 @@
+{
+  "bootstrap": {
+    "resamples": 5000,
+    "seed": 2605
+  },
+  "challenges": [
+    "random_0",
+    "random_1",
+    "random_2",
+    "random_3",
+    "random_4",
+    "adversarial_1",
+    "adversarial_2",
+    "coherent_drift"
+  ],
+  "data": {
+    "input_dim": 16,
+    "n_test": 800,
+    "n_train": 2500,
+    "noise_std": 0.35
+  },
+  "environment": {
+    "deterministic_algorithms": true,
+    "numpy": "2.5.4",
+    "python": "3.13.3",
+    "threads": 1,
+    "torch": "2.15.0"
+  },
+  "epochs": 5,
+  "interpretation": "Exact bit budgets do not equalize code rate. Per-example ground truth is separate from preservation of the encoder prediction. Three- and four-bit stress tests exceed SECDED guarantees. Replays are not new independent seeds.",
+  "methods": [
+    "uncoded",
+    "repetition3",
+    "hamming74_detect",
+    "hamming74_repair",
+    "hamming74_abstain",
+    "hamming84_secded"
+  ],
+  "model": {
+    "hidden_dim": 48,
+    "input_dim": 16
+  },
+  "randomization": "SHA256(seed,width,k) initializes a CPU generator; equal-width policies share the same masks.",
+  "schema_version": 1,
+  "seeds": [
+    7,
+    17,
+    29,
+    41,
+    53
+  ],
+  "source_sha256": {
+    "__init__.py": "7dc1af44b4da1ebdde596f349945b5df7be09af1ca32667865da928abf2c501a",
+    "artifacts.py": "50ba7a3dc0f14e1ec2732c7b66f1259045e47393b9b160b996f809f9e0a1a6a3",
+    "codes.py": "7eb6cdbdc2ba4f3cbcff739388ac38eb36766a53dc9cf1adc931a25aba5d06be",
+    "corruption.py": "15890b711422a900cc0116b801f75e4bcd06844d049f9ca7f85793a29dcef48a",
+    "data.py": "97f4cb4109fb6a6739fed3a77e9c12deb13b789cdd5bc97b112ae7892430f6bd",
+    "exhaustive.py": "7e17dbe08a38d19412dcb500e5b7e07b824748d8176d7f2bd387be873108cca7",
+    "experiment.py": "2318c2337a6c8100a811206181454471dbbea21efaed071692d2aaed3c55a299",
+    "metrics.py": "5b934c5d6c171e450c743dc7b9c55f17d19cebef8dec1880315f024b2fddf579",
+    "model.py": "0b272ea99e40cc5be1ad2a81b37671723012b8a70b631eb021685ada682ed598",
+    "plotting.py": "96076ced4e5cf6fe6b8d7c89f94ec97ad9ebb277a79e9622220bfbeb5d4edd20",
+    "seed.py": "25abfe493fa8f31ec0046d36ea30f54e5655fb20baf1f35cfbb9849f8bb2676b",
+    "selective.py": "8d1971b0927614afa370b9ce849f875c8c4304ae3adc7e694b43248cca98b29b",
+    "study.py": "311b975ca683635f9f4a8635df0c148fa3463623d1be3be75e4bc85279ecc071",
+    "training.py": "c2cb7801c7919e4dda43b6a210b0dea36fcca563558e9e179c65d62919286517"
+  },
+  "study": "selective-decoding-v1",
+  "training": {
+    "batch_size": 256,
+    "device": "cpu",
+    "lr": 0.002
+  }
+}

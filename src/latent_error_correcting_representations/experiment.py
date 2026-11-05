@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-import json
+from copy import deepcopy
 import math
 from numbers import Integral, Real
 from pathlib import Path
@@ -10,6 +10,7 @@ import statistics
 import numpy as np
 import torch
 
+from .artifacts import canonical, write_new_json
 from .codes import METHODS, encode, decode, task_label
 from .corruption import flip_exactly_k, adversarial_single_flip, nearest_opposite_valid_codeword
 from .data import make_dataset
@@ -24,6 +25,9 @@ def run_seed(seed: int, out_dir: str | Path, epochs: int = 30) -> dict:
     if isinstance(epochs, bool) or not isinstance(epochs, Integral) or epochs <= 0:
         raise ValueError("epochs must be a positive integer")
     epochs = int(epochs)
+    destination = Path(out_dir)/f"seed_{seed}.json"
+    if destination.exists() or destination.is_symlink():
+        raise FileExistsError(f"refusing to replace existing seed evidence: {destination}")
     data_options = dict(n_train=2500, n_test=800, input_dim=16, noise_std=0.35)
     model_options = dict(input_dim=data_options["input_dim"], hidden_dim=48)
     training_options = dict(epochs=epochs, batch_size=256, lr=2e-3, device="cpu")
@@ -99,7 +103,7 @@ def run_seed(seed: int, out_dir: str | Path, epochs: int = 30) -> dict:
 
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    (out / f"seed_{seed}.json").write_text(json.dumps(result, indent=2, allow_nan=False), encoding="utf-8")
+    write_new_json(out / f"seed_{seed}.json", result)
     return result
 
 
@@ -111,7 +115,7 @@ def _task_accuracy(decoded, true_message: torch.Tensor) -> dict[str, float]:
 def _mean_sd(values: list[float]) -> dict:
     if not values or any(
         isinstance(value, bool) or not isinstance(value, Real)
-        or not math.isfinite(value) or not 0.0 <= value <= 1.0
+        or not 0.0 <= value <= 1.0 or not math.isfinite(value)
         for value in values
     ):
         raise ValueError("accuracy and rate measurements must be finite numbers within [0, 1]")
@@ -128,15 +132,17 @@ def summarize(results: list[dict]) -> dict:
     seeds = [validate_seed(result["seed"]) for result in results]
     if len(set(seeds)) != len(seeds):
         raise ValueError("seed results must be distinct; repeated seeds are not independent runs")
+    for result in results:
+        _validate_run(result)
     metadata = results[0].get("metadata")
-    if any(result.get("metadata") != metadata for result in results):
+    if any(canonical(result.get("metadata")) != canonical(metadata) for result in results):
         raise ValueError("cannot aggregate runs with different configurations, environments or metric references")
     has_end_to_end = "end_to_end" in results[0]
     if any(("end_to_end" in result) != has_end_to_end for result in results):
         raise ValueError("cannot mix results with and without ground-truth metrics")
     summary: dict = {"seeds": [r["seed"] for r in results], "encoder": {}, "random_corruption": {}, "adversarial_single_flip": {}, "coherent_drift": {}}
     if metadata is not None:
-        summary["metadata"] = metadata
+        summary["metadata"] = deepcopy(metadata)
     for key in ("message_bit_accuracy", "task_accuracy"):
         summary["encoder"][key] = _mean_sd([r["encoder"][key] for r in results])
 
@@ -172,3 +178,47 @@ def summarize(results: list[dict]) -> dict:
                     for metric in ("message_bit_accuracy", "task_accuracy")
                 }
     return summary
+
+
+def _validate_run(result):
+    """Check internal evidence relationships as well as each individual number."""
+    try:
+        loss = result['encoder']['final_train_loss']
+        if type(loss) not in (float, int) or loss < 0 or not math.isfinite(loss):
+            raise ValueError('training loss must be finite and nonnegative')
+        metadata = result.get('metadata')
+        if metadata is not None:
+            if type(metadata.get('schema_version')) is not int or metadata['schema_version'] != 2:
+                raise ValueError('unsupported run metadata schema')
+            epochs = metadata['configuration']['training']['epochs']
+            if type(epochs) is not int or epochs <= 0:
+                raise ValueError('run epochs must be a positive integer')
+            if metadata['configuration']['methods'] != list(METHODS):
+                raise ValueError('recorded methods differ from the comparison')
+        def metrics(row, full=False):
+            fields = {'message_bit_accuracy','task_accuracy'}
+            if full: fields |= {'detection_rate','correction_rate'}
+            if not isinstance(row, dict) or row.keys() != fields:
+                raise ValueError('invalid metric fields')
+            for number in row.values(): _mean_sd([number])
+            bit, task = row['message_bit_accuracy'], row['task_accuracy']
+            # Four correct bits are necessary and sufficient for a correct identity.
+            if task > bit + 1e-7 or bit > .75 + .25*task + 1e-7:
+                raise ValueError('bit accuracy and task accuracy contradict one another')
+            if full and row['correction_rate'] > row['detection_rate'] + 1e-7:
+                raise ValueError('repair activation cannot exceed detection')
+        metrics({k: result['encoder'][k] for k in ('message_bit_accuracy','task_accuracy')})
+        for section, full in ((result, True), (result.get('end_to_end'), False)):
+            if section is None: continue
+            for challenge in ('random_corruption','adversarial_single_flip','coherent_drift'):
+                if section[challenge].keys() != METHODS.keys():
+                    raise ValueError('comparison method set differs from the declared design')
+                for row in section[challenge].values():
+                    if challenge == 'random_corruption':
+                        if row.keys() != {'0','1','2'}:
+                            raise ValueError('corruption budgets differ from the declared design')
+                        for value in row.values(): metrics(value, full)
+                    else: metrics(row, full)
+        canonical(result)
+    except (KeyError, TypeError, OverflowError, RecursionError) as exc:
+        raise ValueError('invalid or incomplete seed evidence') from exc
